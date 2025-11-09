@@ -123,6 +123,81 @@ def delete_document(document_id):
     return False
 
 
+st.title("RAG Document Assistant Frontend")
+st.write("Hello!, this is application using Streamlit for frontend and FastAPI for backend.")
+
+
+# Upload a Document section
+st.markdown("### 📄 Upload a Document")
+
+uploaded_file = st.file_uploader("Choose a document to upload", type=["pdf", "txt", "docx"])
+
+if uploaded_file is not None:
+    result = upload_document(uploaded_file)
+    if result:
+        st.success("✅ Document uploaded successfully!")
+        st.json(result)
+
+
+# Ask a Question section
+st.markdown("### ❓ Ask a Question")
+
+question_input = st.text_input("Enter your question:")
+
+# Optional: document ID input (if your backend supports filtering)
+doc_ids_input = st.text_input("Document IDs (comma-separated, optional):")
+doc_ids = [doc.strip() for doc in doc_ids_input.split(",")] if doc_ids_input else None
+
+top_k = st.slider("Number of top results to return", min_value=1, max_value=10, value=4)
+
+if st.button("Submit Question"):
+    if question_input:
+        result = ask_question(question_input, document_ids=doc_ids, top_k=top_k)
+        if result:
+            st.success("✅ Answer received!")
+            st.markdown("**Answer:**")
+            st.write(result.get("answer", "No answer returned."))
+            if "sources" in result:
+                st.markdown("**Sources:**")
+                for source in result["sources"]:
+                    st.markdown(f'<div class="source-box">{source}</div>', unsafe_allow_html=True)
+    else:
+        st.warning("Please enter a question before submitting.")
+
+
+# Get Available Documents
+st.markdown("### 📚 Available Documents")
+
+if st.button("Refresh Document List"):
+    docs = get_documents()
+    if docs:
+        if isinstance(docs, list) and docs:
+            for doc in docs:
+                st.markdown(f'<div class="source-box">{doc}</div>', unsafe_allow_html=True)
+        else:
+            st.info("No documents found.")
+
+
+# Delete Document(s)
+st.markdown("### 🗑️ Delete a Document")
+
+docs = get_documents()
+if docs is not None:
+    if docs:
+        selected_doc = st.selectbox("Select a document to delete", docs)
+        confirm_delete = st.checkbox("I confirm I want to delete this document")
+
+        if st.button("Delete Selected Document"):
+            if selected_doc and confirm_delete:
+                success = delete_document(selected_doc)
+                if success:
+                    st.success(f"✅ Document '{selected_doc}' deleted successfully.")
+            elif not confirm_delete:
+                st.warning("Please confirm deletion by checking the box.")
+    else:
+        st.info("No documents available to delete.")
+
+
 def check_backend_health():
     '''Check if backend is running'''
     try:
@@ -130,8 +205,6 @@ def check_backend_health():
         return response.status_code == 200
     except:
         return False
-
-
 
 def main():
     # Header
@@ -209,7 +282,7 @@ def main():
 
     # Tab 1: Question Answering
     with tab1:
-        st.header("Ask Questions About Your Document(s)")
+        st.header("Ask Questions About Your Documents")
 
         # Check if documents exist
         if not docs_response or not docs_response.get('documents'):
@@ -366,6 +439,40 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+# Example: simple dataframe
+df = pd.DataFrame({
+    "Category": ["A", "B", "C", "D"],
+    "Values": [10, 23, 17, 8]
+})
+
+# Plotly chart
+fig = px.bar(df, x="Category", y="Values", title="Sample Bar Chart")
+st.plotly_chart(fig)
+
+# Example input
+name = st.text_input("Enter your name:")
+if name:
+    st.success(f"Welcome, {name}!")
+
+# Backend URL
+# backend_url = "http://127.0.0.1:8000/health"
+
+# Button to trigger request
+if st.button("Check Backend Health"):
+    backend = backend_url + '/health'
+    st.write(f"Connecting to: {backend}")
+    try:
+        response = requests.get(backend_url + "/health")
+        # print(response)
+        # print(response.status_code)
+        if response.status_code == 200:            
+            data = response.json()
+            st.success(f"Backend says: {data['status']}")
+        else:
+            st.error(f"Error: {response.status_code}")
+    except Exception as e:
+        st.error(f"Failed to connect: {e}")
 
 
 
