@@ -213,7 +213,7 @@ def main():
 
         # Check if documents exist
         if not docs_response or not docs_response.get('documents'):
-            st.warning("⚠️ Please upload documents first in the 'Upload Documents' tab")
+            st.warning("⚠️ Please upload document(s) using the 'Upload Documents' tab")
         else:
             # Question input
             question = st.text_input(
@@ -357,7 +357,7 @@ def main():
     st.divider()
     st.markdown('''
     <div style='text-align: center; color: #666; padding: 1rem;'>
-        Built with ❤️ using Streamlit, FastAPI, LangChain, and ChromaDB<br>
+        Built with ❤️ using Streamlit, FastAPI, LangChain, and ChromaDB.<br>
         RAG Document Assistant v1.0.0
     </div>
     ''', unsafe_allow_html=True)
