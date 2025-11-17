@@ -156,6 +156,8 @@ async def startup_event():
     logger.info(f"Allowed extensions: {settings.allowed_extensions}")
     logger.info(f"LLM Model: {settings.llm_model}")
     logger.info(f"Embedding Model: {settings.embedding_model}")
+    # logger.info(f"Open API Key: {settings.openai_api_key}")
+        
 
     # Check services
     doc_count = vector_store.get_document_count()

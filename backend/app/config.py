@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     allowed_extensions: Set[str] = {".pdf", ".docx", ".txt"}
 
     # 🤖 LLM Configuration
-    llm_model: str = "gpt-3.5-turbo"
+    llm_model: str = "gpt-5-mini"
     llm_temperature: float = 0.7
     max_tokens: int = 500
 

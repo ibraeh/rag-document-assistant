@@ -5,6 +5,8 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 import os
+import time
+
 
 # load .env
 load_dotenv(".env")

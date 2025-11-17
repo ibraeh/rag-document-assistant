@@ -46,10 +46,7 @@ Instructions:
 
     @staticmethod
     def create_qa_prompt(question: str, context_chunks: List[Dict]) -> tuple:
-        context = "
-".join(
-            f"[Source {i+1}: {chunk.get('metadata', {}).get('filename', 'Unknown')}, Page {chunk.get('metadata', {}).get('page_number', '?')}]
-{chunk['text']}"
+        context = "".join(f"[Source {i+1}: {chunk.get('metadata', {}).get('filename', 'Unknown')}, Page {chunk.get('metadata', {}).get('page_number', '?')}]{chunk['text']}"
             for i, chunk in enumerate(context_chunks)
         )
         user_prompt = f"""Context from documents:
@@ -62,11 +59,7 @@ Answer the question based on the context provided above. Remember to cite your s
 
     @staticmethod
     def create_summarization_prompt(text: str, max_sentences: int = 5) -> tuple:
-        user_prompt = f"Please summarize the following text in {max_sentences} sentences or less:
-
-{text}
-
-Summary:"
+        user_prompt = f"Please summarize the following text in {max_sentences} sentences or less:{text}Summary:"
         return PromptTemplate.SYSTEM_SUMMARIZATION, user_prompt
 
     @staticmethod
@@ -75,18 +68,10 @@ Summary:"
         for doc_id, chunks in sources_by_doc.items():
             if chunks:
                 doc_name = chunks[0].get('metadata', {}).get('filename', doc_id)
-                context += f"
-=== From {doc_name} ===
-" + "
-".join(chunk['text'] for chunk in chunks)
-        user_prompt = f"Compare the information from different documents regarding this question:
+                context += f"=== From {doc_name} ===" + "".join(chunk['text'] for chunk in chunks)
+        user_prompt = f"""Compare the information from different documents regarding this question:Question: {question}Documents:{context}
 
-Question: {question}
-
-Documents:
-{context}
-
-Provide a comparative analysis:"
+Provide a comparative analysis:"""
         return PromptTemplate.SYSTEM_COMPARISON, user_prompt
 
 
@@ -193,10 +178,13 @@ class LLMService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=temperature,
-                max_tokens=max_tokens
+                # temperature=temperature,
+                # temperature=1,
+                # max_completion_tokens=max_tokens
             )
+            # print(response)
             answer = response.choices[0].message.content.strip()
+            # print(answer)
             self.total_requests += 1
             if hasattr(response, "usage"):
                 self.total_tokens_used += response.usage.total_tokens
@@ -210,21 +198,15 @@ class LLMService:
     def generate_fallback_answer(self, question: str, context_chunks: List[Dict]) -> str:
         if not context_chunks:
             return "I couldn't find any relevant information to answer your question."
-        parts = ["Based on the documents, here's what I found:
-"]
+        answer_parts = ["Based on the documents, here's what I found:"]
         for i, chunk in enumerate(context_chunks[:3], 1):
             meta = chunk.get("metadata", {})
             doc = meta.get("filename", "Unknown")
             page = meta.get("page_number", "?")
             text = chunk["text"][:400]
-            parts.append(f"
-**From {doc} (Page {page}):**
-{text}...")
-        parts.append("
-
-*Note: This is a fallback response. For better answers, configure an OpenAI API key.*")
-        return "
-".join(parts)
+            answer_parts.append(f"**From {doc} (Page {page}):**{text}...")
+        answer_parts.append("*Note: This is a fallback response. For better answers, configure an OpenAI API key.*")
+        return "".join(answer_parts)
 
     def summarize_document(self, text: str, max_sentences: int = 5, model: Optional[str] = None) -> str:
         if not self.client:
@@ -238,13 +220,13 @@ class LLMService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.5,
-                max_tokens=500
+                # temperature=0.5,
+                # max_tokens=500
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"Summary error: {e}")
-            return f"Error generating summary: {str(e)}        except Exception as e:
+            return f"Error generating summary: {str(e)}"
 
 
     def compare_documents(self, question: str, sources_by_doc: Dict[str, List[Dict]], model: Optional[str] = None) -> str:
@@ -264,8 +246,8 @@ class LLMService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
-                max_tokens=800
+                # temperature=0.7,
+                # max_tokens=800
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -346,39 +328,35 @@ def get_llm_stats() -> dict:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    example_chunks = [
-        {
-            "text": "Machine learning is a subset of artificial intelligence that enables systems to learn from data.",
-            "metadata": {"filename": "ml_intro.pdf", "page_number": 1, "document_id": "doc1"}
-        },
-        {
-            "text": "Deep learning uses neural networks with multiple layers to process complex patterns.",
-            "metadata": {"filename": "ml_intro.pdf", "page_number": 2, "document_id": "doc1"}
-        }
-    ]
+    # example_chunks = [
+    #     {
+    #         "text": "Machine learning is a subset of artificial intelligence that enables systems to learn from data.",
+    #         "metadata": {"filename": "ml_intro.pdf", "page_number": 1, "document_id": "doc1"}
+    #     },
+    #     {
+    #         "text": "Deep learning uses neural networks with multiple layers to process complex patterns.",
+    #         "metadata": {"filename": "ml_intro.pdf", "page_number": 2, "document_id": "doc1"}
+    #     }
+    # ]
 
-    print("
-=== Testing Question Answering ===")
-    question = "What is machine learning?"
-    answer = llm_service.generate_answer(question, example_chunks)
-    print(f"Question: {question}")
-    print(f"Answer: {answer}")
+    # print("=== Testing Question Answering ===")
+    # question = "What is machine learning?"
+    # answer = llm_service.generate_answer(question, example_chunks)
+    # print(f"Question: {question}")
+    # print(f"Answer: {answer}")
 
-    print("
-=== Testing Cache ===")
-    answer2 = llm_service.generate_answer(question, example_chunks)
-    print("Second request (should be cached):")
-    print(answer2)
+    # print("=== Testing Cache ===")
+    # answer2 = llm_service.generate_answer(question, example_chunks)
+    # print("Second request (should be cached):")
+    # print(answer2)
 
 
-    print("
-=== Usage Statistics ===")
-    stats = llm_service.get_usage_stats()
-    for key, value in stats.items():
-        print(f"{key}: {value}")
+    # print("=== Usage Statistics ===")
+    # stats = llm_service.get_usage_stats()
+    # for key, value in stats.items():
+    #     print(f"{key}: {value}")
 
-    print("
-=== Cost Estimate ===")
-    cost = llm_service.estimate_cost()
-    for key, value in cost.items():
-        print(f"{key}: {value}")
+    # print("=== Cost Estimate ===")
+    # cost = llm_service.estimate_cost()
+    # for key, value in cost.items():
+    #     print(f"{key}: {value}")
