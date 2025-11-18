@@ -12,8 +12,8 @@ import logging
 
 import pypdf
 from docx import Document as DocxDocument
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import settings
 
